@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
+import { ReactTyped } from "react-typed";
+import "./style.css"
+import sendIcon from "./assets/top.png";
+import downloadIcon from "./assets/download (1).png";
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import LoginButton from "./components/ui/LoginButton";
+import LogoutButton from "./components/ui/LogoutButton";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 export default function App() {
   const [prompt, setPrompt] = useState("");
-  const [cfgScale, setCfgScale] = useState(7);
-  const [steps, setSteps] = useState(30);
-  const [size, setSize] = useState("1024");
-  const [seed, setSeed] = useState("");
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState(null);
+  const [modalImage, setModalImage] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
 
   async function fetchImages() {
     const res = await fetch(`${API_URL}/api/images`);
@@ -17,30 +27,53 @@ export default function App() {
     setImages(data);
   }
 
-  useEffect(() => { fetchImages(); }, []);
+useEffect(() => {
+  async function checkAuth() {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        credentials: "include", // 👈 critical
+      });
+      const data = await res.json();
+      setUser(data.authenticated ? data.user : null);
+    } catch (err) {
+      console.error("Auth check failed:", err);
+    } finally {
+      setLoadingAuth(false);
+    }
+  }
+
+  checkAuth();
+}, []);
+
+  useEffect(() => {
+    fetchImages();
+  }, []);
 
   async function handleGenerate(e) {
     e.preventDefault();
     setLoading(true);
+    setGeneratedImage(null); // Reset previous result
+
     try {
-      const width = parseInt(size, 10);
-      const height = width;
       const res = await fetch(`${API_URL}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          cfgScale: Number(cfgScale),
-          steps: Number(steps),
-          seed: seed === "" ? null : Number(seed),
-          width,
-          height,
+          cfgScale: 7,
+          steps: 30,
+          seed: null,
+          width: 1024,
+          height: 1024,
         }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
+
+      const newImageURL = `${API_URL}${data.url}`; // assuming response has `.url`
+      setGeneratedImage(newImageURL);
       setPrompt("");
-      setSeed("");
       await fetchImages();
     } catch (err) {
       alert(err.message);
@@ -48,73 +81,162 @@ export default function App() {
       setLoading(false);
     }
   }
+function ImageModal({ imageUrl, onClose }) {
+  if (!imageUrl) return null;
+
+  async function handleDownload() {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "generated-image.png"; // You can customize the filename
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Failed to download image.");
+      console.error(err);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-4">Text → Image (SDXL)</h1>
-
-        <form onSubmit={handleGenerate} className="grid gap-4 bg-white p-4 rounded-2xl shadow">
-          <input
-            className="border rounded-xl p-3"
-            placeholder="Describe the image you want..."
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            required
-          />
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <label className="flex items-center gap-2">
-              <span className="w-20">CFG</span>
-              <input type="number" min="1" max="20" step="0.5" value={cfgScale}
-                     onChange={(e) => setCfgScale(e.target.value)}
-                     className="border rounded p-2 w-full" />
-            </label>
-
-            <label className="flex items-center gap-2">
-              <span className="w-20">Steps</span>
-              <input type="number" min="1" max="50" value={steps}
-                     onChange={(e) => setSteps(e.target.value)}
-                     className="border rounded p-2 w-full" />
-            </label>
-
-            <label className="flex items-center gap-2">
-              <span className="w-20">Seed</span>
-              <input type="number" value={seed} onChange={(e) => setSeed(e.target.value)}
-                     placeholder="random" className="border rounded p-2 w-full" />
-            </label>
-
-            <label className="flex items-center gap-2">
-              <span className="w-20">Size</span>
-              <select value={size} onChange={(e) => setSize(e.target.value)}
-                      className="border rounded p-2 w-full">
-                <option value="512">512×512</option>
-                <option value="768">768×768</option>
-                <option value="1024">1024×1024</option>
-              </select>
-            </label>
-          </div>
-
-          <button
-            disabled={loading}
-            className="bg-black text-white rounded-xl px-4 py-3 disabled:opacity-50">
-            {loading ? "Generating…" : "Generate"}
-          </button>
-        </form>
-
-        <h2 className="text-xl font-semibold mt-8 mb-3">Recent images</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {images.map((img) => (
-            <div key={img.id} className="bg-white rounded-xl shadow overflow-hidden">
-              <img src={`${API_URL}${img.url}`} alt={img.prompt} className="w-full h-64 object-cover" />
-              <div className="p-3 text-sm">
-                <div className="font-medium line-clamp-2">{img.prompt}</div>
-                <div className="text-gray-500 mt-1">{new Date(img.createdAt).toLocaleString()}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <img src={imageUrl} alt="Preview" className="modal-image" />
+        <button onClick={handleDownload} className="download-btn"><img src={downloadIcon} alt="down" className="download-btn-img"/></button>
       </div>
     </div>
+  );
+}
+
+
+  return (
+    <div className="main">
+      <div className="content">
+        {/* Header */}
+        <h1 className="header-title">
+          <ReactTyped
+          strings={[
+            "Text to image conversion with stable diffusion"
+          ]}
+          typeSpeed={60}
+          backSpeed={30}
+        />
+        </h1>
+
+        <div className="auth-section">
+  {loadingAuth ? (
+    <p>Loading...</p>
+  ) : user ? (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <img src={user.picture} alt="Avatar" style={{ width: '32px', borderRadius: '50%' }} />
+      <span>{user.name}</span>
+      <LogoutButton />
+    </div>
+  ) : (
+    <LoginButton />
+  )}
+</div>
+
+
+        <p className="intro-text">
+  Hey, this chatbot uses <span className="highlight">Stable Diffusion</span> to generate art-like images. 
+  Just tell me what’s on your mind and I will paint it for you.
+        </p>
+
+        {/* Generated Image Preview */}
+        {loading ? (
+          <div className="loading-container">
+        <DotLottieReact
+          src="https://lottie.host/a5df2229-45ad-4d9d-b0f6-6a52220bc56d/3nqLXHcTgD.lottie"
+          loop
+          autoplay
+          style={{ width: "150px", height: "150px", margin: "auto" }}
+        />
+        <p>Workin' on it...</p>
+        </div>
+      ) : (
+        generatedImage && (
+          <div className="generated-image-container" onClick={() => setModalImage(generatedImage)}>
+            <img src={generatedImage} alt="Generated" className="generated-image" />
+          </div>
+        )
+      )}
+        
+        {/* Input Form */}
+        <form onSubmit={handleGenerate} className="generation-form">
+          <div className="chat-box">
+          <input
+            type="text"
+            className="text-input"
+            placeholder="Type anything..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            disabled={loading}
+          />
+          <button type="submit" className="generate-btn" disabled={loading}>
+          <img src={sendIcon} alt="send" className="send-icon" />
+          </button>
+        </div>
+        </form>
+
+        {/* Recent Images Slider */}
+     <section className="recent-images-section">
+  <h2 className="section-title">Recent images</h2>
+
+  <Carousel
+    opts={{ loop: true, align: "start" }}
+    plugins={[
+      Autoplay({ delay: 3000, stopOnInteraction: false, stopOnMouseEnter: false })
+    ]}
+    className="carousel"
+  >
+    <CarouselContent className="carousel-content">
+      {(() => {
+        const recent = images.slice(-10);
+        return recent.map((img, index) => (
+          <CarouselItem
+          key={`${img.id}-${index}`}
+          className="pl-4 shrink-0 grow-0 basis-[320px]"
+        >
+          <div 
+            className="slider-item" 
+            data-tooltip={`${img.prompt} • ${new Date(img.createdAt).toLocaleDateString()}`}
+            onClick={() => setModalImage(`${API_URL}${img.url}`)}
+          >
+            <img
+              src={`${API_URL}${img.url}`}
+              alt={img.prompt}
+              className="slider-image"
+            />
+          </div>
+        </CarouselItem>
+        ));
+      })()}
+    </CarouselContent>
+  </Carousel>
+</section>
+<footer className="footer">
+        <p className="footer-text">
+          Designed and coded by{" "}
+          <a 
+            href="https://github.com/Shadowstormez" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="footer-link"
+          >
+            Aria Tehrani
+          </a>
+        </p>
+      </footer>
+
+      </div>
+      <ImageModal imageUrl={modalImage} onClose={() => setModalImage(null)} />
+    </div>
+    
   );
 }
