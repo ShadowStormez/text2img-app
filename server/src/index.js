@@ -8,7 +8,9 @@ import fs from "fs";
 import axios from "axios";
 import { PrismaClient } from "@prisma/client";
 import authRoutes from "./routes/auth.js";
+import jwt from "jsonwebtoken"; // 👈 add this
 import cookieParser from "cookie-parser"; // 👈 for handling JWT cookies
+
 
 
 
@@ -25,7 +27,7 @@ const STABILITY_ENGINE = process.env.STABILITY_ENGINE || "stable-diffusion-xl-10
 
 // Configure CORS
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "http://localhost:5173", // 👈 EXACT match
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
   credentials: true, // 👈 MUST BE TRUE
@@ -56,20 +58,41 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-// List images
-app.get("/api/images", async (_req, res) => {
-  const images = await prisma.image.findMany({ orderBy: { createdAt: "desc" } });
-  res.set("X-Debug", "Images route");
-  console.log("Response headers for /api/images:", res.getHeaders());
+// Auth middleware: protects routes that need login
+const authenticate = (req, res, next) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // Attach user data to request
+    next();
+  } catch (err) {
+    console.error("Invalid token:", err);
+    res.status(401).json({ error: "Invalid or expired token" });
+  }
+};
+
+app.get("/api/images", authenticate, async (req, res) => {
+  const images = await prisma.image.findMany({
+    where: { userId: req.user.userId }, // 👈 ONLY THIS USER'S IMAGES
+    orderBy: { createdAt: "desc" },
+  });
   res.json(images);
 });
 
 // Generate image via Stability API
-app.post("/api/generate", async (req, res) => {
+app.post("/api/generate", authenticate, async (req, res) => {
   try {
     const { prompt, steps = 30, cfgScale = 7, seed = null, width = 1024, height = 1024 } = req.body;
     if (!prompt) return res.status(400).json({ error: "prompt is required" });
     if (!STABILITY_API_KEY) return res.status(500).json({ error: "Missing STABILITY_API_KEY" });
+
+    // 👇 Now you know who made this!
+    const userId = req.user.userId;
 
     const apiUrl = `https://api.stability.ai/v1/generation/${STABILITY_ENGINE}/text-to-image`;
 
@@ -106,18 +129,15 @@ app.post("/api/generate", async (req, res) => {
         height: Number(height),
         fileName: filename,
         url: `/uploads/${filename}`,
+        userId: userId, // 👈 Link to user!
       },
     });
 
-    res.set("X-Debug", "Generate route");
-    console.log("Response headers for /api/generate:", res.getHeaders());
     res.json(record);
   } catch (err) {
     const status = err.response?.status || 500;
     const msg = err.response?.data?.toString?.() || err.message;
     console.error("/api/generate error:", msg);
-    res.set("X-Debug", "Generate error");
-    console.log("Response headers for /api/generate error:", res.getHeaders());
     res.status(status).json({ error: msg });
   }
 });

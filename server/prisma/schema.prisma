@@ -2,25 +2,37 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
-
 
 datasource db {
-provider = "sqlite"
-url = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id @default(cuid())
+  googleId  String?  @unique
+  email     String?  @unique
+  name      String?
+  picture   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images Image[] // One user can generate many images
+}
 
 model Image {
-id Int @id @default(autoincrement())
-prompt String
-steps Int @default(30)
-cfgScale Float @default(7)
-seed Int?
-width Int @default(1024)
-height Int @default(1024)
-fileName String
-url String
-createdAt DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  prompt    String
+  steps     Int      @default(30)
+  cfgScale  Float    @default(7)
+  seed      Int?
+  width     Int      @default(1024)
+  height    Int      @default(1024)
+  fileName  String
+  url       String
+  createdAt DateTime @default(now())
+  userId    String?  // Optional: who generated it
+  user      User?    @relation(fields: [userId], references: [id])
 }

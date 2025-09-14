@@ -8,6 +8,114 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
 
   font-family: 'Roboto', sans-serif;
 }
+
+.big-three{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 100px;
+  margin-bottom: 20px;
+}
+
+/* === NAVBAR === */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 2rem;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  color: white;
+}
+
+.nav-left,
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #9c27b0;
+}
+
+.nav-username {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.nav-placeholder {
+  font-size: 1rem;
+  color: #aaa;
+}
+
+/* === LOGIN MODAL === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.login-modal {
+  background: #1c1c1c;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+  max-width: 400px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-modal h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+.login-modal p {
+  color: #ccc;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+.log-btn {
+  background: linear-gradient(145deg, #9c27b0, #673ab7);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-weight: 600;
+}
+
+.login-text{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.log-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(156, 39, 176, 0.4);
+}
 .header-title {
   font-size: 2.5rem;
   font-weight: 700;
@@ -29,6 +137,16 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+
+  h2 {
+    margin-bottom: 0;
+    font-size: 2rem;
+  }
+
+  p {
+    margin-top: 0.5rem;
+    font-size: 1.25rem;
+  }
 }
 
 .intro-text .highlight {
@@ -91,6 +209,7 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  width: 100%;
   gap: 3rem;
 }
 
@@ -308,7 +427,7 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
   background: linear-gradient(145deg, #9c27b0, #673ab7);
   border: none;
   padding: 10px 15px;
-  border-radius: 10px;
+  border-radius: 1rem;
   text-decoration: none;
   font-weight: 500;
 
