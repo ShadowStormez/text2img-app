@@ -23,7 +23,7 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 2rem;
+  padding: 0.5rem 2rem;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -162,7 +162,6 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
 .generated-image-container {
   display: flex;
   justify-content: center;
-  margin: 2rem 0;
 }
 
 .generated-image {
@@ -201,6 +200,12 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
     linear-gradient(90deg, #9c27b0, #673ab7, #4a148c);
   background-origin: border-box;
   background-clip: padding-box, border-box;
+}
+
+@media (max-width: 768px) {
+  .chat-box {
+    width: 90%;
+  }
 }
 
 /* Form & Input */
@@ -271,6 +276,14 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
     align-items: center;
     justify-content: center;
     gap: 10px;
+}
+
+.recent-text{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
 .section-title {
@@ -428,6 +441,8 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
   border: none;
   padding: 10px 15px;
   border-radius: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   text-decoration: none;
   font-weight: 500;
 
@@ -435,6 +450,11 @@ background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, F
     width: 24px;
     height: 24px;
   }
+}
+
+.download-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(156, 39, 176, 0.4);
 }
 
 .auth-section {

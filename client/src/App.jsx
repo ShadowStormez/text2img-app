@@ -4,6 +4,7 @@ import "./style.css"
 import sendIcon from "./assets/top.png";
 import downloadIcon from "./assets/download (1).png";
 import googleIcon from "./assets/google.png";
+import recentsIcon from "./assets/recent.png";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -241,7 +242,10 @@ function ImageModal({ imageUrl, onClose }) {
       {/* Recent Images Slider - Only show if there are images */}
 {images.length > 0 && (
   <section className="recent-images-section">
-    <h2 className="section-title">Recent images</h2>
+    <div className="recent-text">
+      <img src={recentsIcon} alt="recents" width={24} height={24} />
+      <h2 className="section-title">Recent images</h2>
+    </div>
 
     <Carousel
       opts={{ loop: true, align: "start" }}
